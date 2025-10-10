@@ -1,0 +1,29 @@
+{
+  "name": "apple-admin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 5173",
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "element-plus": "^2.8.4",
+    "pinia": "^2.2.6",
+    "vue": "^3.4.38",
+    "vue-router": "^4.4.5"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^20.11.25",
+    "@vitejs/plugin-vue": "^2.3.4",
+    "sass": "^1.77.8",
+    "typescript": "~5.4.5",
+    "vite": "^2.9.18",
+    "vite-plugin-html": "^3.2.2",
+    "vue-tsc": "^2.0.29"
+  }
+}

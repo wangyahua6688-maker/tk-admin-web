@@ -1,6 +1,6 @@
-// src/services/api/roles.ts - 角色管理相关API接口
+// src/features/auth/api/roles.ts - 角色管理相关API接口
 // 导入HTTP客户端实例
-import http from '../http';
+import http from '@/services/http';
 
 // 角色信息接口定义
 export interface Role {

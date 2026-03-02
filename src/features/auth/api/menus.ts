@@ -1,6 +1,6 @@
-// src/services/api/menus.ts - 菜单管理相关API接口
+// src/features/auth/api/menus.ts - 菜单管理相关API接口
 // 导入HTTP客户端实例
-import http from '../http';
+import http from '@/services/http';
 
 // 菜单信息接口定义
 export interface Menu {

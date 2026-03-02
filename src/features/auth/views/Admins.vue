@@ -1,4 +1,4 @@
-<!-- src/views/auth/Admins.vue - 管理员用户管理页面组件 -->
+<!-- src/features/auth/views/Admins.vue - 管理员用户管理页面组件 -->
 <template>
   <!-- 管理员用户容器 -->
   <div class="users-container">
@@ -58,7 +58,7 @@
 import { ref, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Edit, Delete } from '@element-plus/icons-vue';
-import adminAPI, { AdminUser } from "@/services/api/admins";
+import adminAPI, { AdminUser } from "@/features/auth/api/admins";
 
 // 管理员用户列表数据
 const users = ref<(AdminUser)[]>([]);

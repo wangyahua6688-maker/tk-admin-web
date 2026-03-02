@@ -1,4 +1,4 @@
-<!-- src/views/dashboard/Dashboard.vue - 仪表盘页面组件 -->
+<!-- src/features/dashboard/views/Dashboard.vue - 仪表盘页面组件 -->
 <template>
   <!-- 仪表盘容器 -->
   <div class="dashboard">

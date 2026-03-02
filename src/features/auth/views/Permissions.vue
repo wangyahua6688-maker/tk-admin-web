@@ -1,4 +1,4 @@
-<!-- src/views/auth/Permissions.vue - 权限管理页面组件 -->
+<!-- src/features/auth/views/Permissions.vue - 权限管理页面组件 -->
 <template>
   <!-- 权限管理容器 -->
   <div>
@@ -67,7 +67,7 @@
 // 权限管理页面逻辑
 // 导入所需模块和组件
 import { computed, reactive, ref } from 'vue';
-import permissionAPI, { Permission, CreatePermissionData, UpdatePermissionData } from '@/services/api/permissions';
+import permissionAPI, { Permission, CreatePermissionData, UpdatePermissionData } from '@/features/auth/api/permissions';
 import { Edit, Delete } from '@element-plus/icons-vue';
 
 // 搜索关键词

@@ -1,4 +1,4 @@
-// src/router/auth/index.ts - 权限管理相关路由模块
+// src/features/auth/routes/index.ts - 权限管理相关路由模块
 import { RouteRecordRaw } from 'vue-router';
 
 // 权限管理模块路由配置
@@ -17,7 +17,7 @@ const authRoutes: RouteRecordRaw[] = [
       { 
         path: 'admins', 
         name: 'Admins', 
-        component: () => import('@/views/auth/Admins.vue'), 
+        component: () => import('@/features/auth/views/Admins.vue'), 
         meta: { 
           title: '管理员用户', 
           icon: 'User' 
@@ -28,7 +28,7 @@ const authRoutes: RouteRecordRaw[] = [
       { 
         path: 'roles', 
         name: 'Roles', 
-        component: () => import('@/views/auth/Roles.vue'), 
+        component: () => import('@/features/auth/views/Roles.vue'), 
         meta: { 
           title: '角色管理', 
           icon: 'UserFilled' 
@@ -39,7 +39,7 @@ const authRoutes: RouteRecordRaw[] = [
       { 
         path: 'permissions', 
         name: 'Permissions', 
-        component: () => import('@/views/auth/Permissions.vue'), 
+        component: () => import('@/features/auth/views/Permissions.vue'), 
         meta: { 
           title: '权限管理', 
           icon: 'Key' 
@@ -50,7 +50,7 @@ const authRoutes: RouteRecordRaw[] = [
       { 
         path: 'menus', 
         name: 'Menus', 
-        component: () => import('@/views/auth/Menus.vue'), 
+        component: () => import('@/features/auth/views/Menus.vue'), 
         meta: { 
           title: '菜单管理', 
           icon: 'Menu' 

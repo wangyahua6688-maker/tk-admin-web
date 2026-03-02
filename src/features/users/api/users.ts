@@ -1,6 +1,6 @@
-// src/services/api/users.ts - 用户管理相关API接口
+// src/features/users/api/users.ts - 用户管理相关API接口
 // 导入HTTP客户端实例
-import http from '../http';
+import http from '@/services/http';
 
 // 用户信息接口定义
 export interface User {

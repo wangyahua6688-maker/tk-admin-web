@@ -2,7 +2,7 @@
 // 负责处理路由前置守卫和后置守卫逻辑
 
 import { Router } from 'vue-router';
-import { useAuthStore } from '@/store/auth';
+import { useAuthStore } from '@/features/auth/store/auth';
 
 /**
  * 设置路由守卫
@@ -10,24 +10,26 @@ import { useAuthStore } from '@/store/auth';
  */
 export function setupRouterGuards(router: Router) {
   // 路由前置守卫 - 在每次路由跳转前执行
-  router.beforeEach((to, from, next) => {
+  router.beforeEach(async (to) => {
     const auth = useAuthStore(); // 获取认证状态
+
+    // 0. 初始化会话（基于 HttpOnly Cookie）
+    if (!auth.sessionChecked) {
+      await auth.bootstrap();
+    }
     
     // 1. 处理公共路由（如登录页）
     if (to.meta.public) {
       // 已登录用户尝试访问登录页，重定向到首页
       if (auth.isAuthenticated && to.path === '/login') {
-        next({ path: '/' });
-        return;
+        return { path: '/' };
       }
-      next(); // 允许访问公共路由
-      return;
+      return true; // 允许访问公共路由
     }
     
     // 2. 验证登录状态 - 未登录用户重定向到登录页
     if (!auth.isAuthenticated) {
-      next({ path: '/login', query: { redirect: to.fullPath } });
-      return;
+      return { path: '/login', query: { redirect: to.fullPath } };
     }
     
     // 3. 权限验证 (如果需要)
@@ -35,7 +37,7 @@ export function setupRouterGuards(router: Router) {
     // 例如：if (!hasPermission(auth.user.roles, to.meta.requiredRoles)) { ... }
     
     // 4. 继续导航
-    next();
+    return true;
   });
 
   // 路由错误处理 - 捕获路由加载或解析过程中的错误

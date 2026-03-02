@@ -1,6 +1,6 @@
-// src/services/api/permissions.ts - 权限管理相关API接口
+// src/features/auth/api/permissions.ts - 权限管理相关API接口
 // 导入HTTP客户端实例
-import http from '../http';
+import http from '@/services/http';
 
 // 权限信息接口定义
 export interface Permission {

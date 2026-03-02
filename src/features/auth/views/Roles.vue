@@ -1,4 +1,4 @@
-<!-- src/views/auth/Roles.vue - 角色管理页面组件 -->
+<!-- src/features/auth/views/Roles.vue - 角色管理页面组件 -->
 <template>
   <!-- 角色管理容器 -->
   <div>
@@ -85,8 +85,8 @@
 // 角色管理页面逻辑
 // 导入所需模块和组件
 import { computed, reactive, ref } from 'vue';
-import roleAPI, { type Role, CreateRoleData, UpdateRoleData } from '@/services/api/roles';
-import permissionAPI, { type Permission } from '@/services/api/permissions';
+import roleAPI, { type Role, CreateRoleData, UpdateRoleData } from '@/features/auth/api/roles';
+import permissionAPI, { type Permission } from '@/features/auth/api/permissions';
 import { Edit, Key, Delete } from '@element-plus/icons-vue';
 
 // 搜索关键词

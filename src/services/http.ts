@@ -1,24 +1,14 @@
 // src/services/http.ts - HTTP客户端封装
 // 使用 axios 进行 HTTP 请求
 import axios from 'axios';
-import { useAuthStore } from '@/store/auth'; // 导入认证状态管理
+import { useAuthStore } from '@/features/auth/store/auth'; // 导入认证状态管理
 import router from '@/router'; // 导入路由实例
 
 // 创建 axios 实例，设置基础 URL 和超时时间
 const http = axios.create({
   baseURL: '/api',     // API 的基础路径
-  timeout: 15000       // 请求超时时间：15秒
-});
-
-// 请求拦截器：在发送请求前添加认证 token
-http.interceptors.request.use((config) => {
-  const auth = useAuthStore();
-  // 如果存在 token，则添加到请求头中
-  if (auth.token) {
-    config.headers = config.headers || {};
-    (config.headers as any).Authorization = `Bearer ${auth.token}`;
-  }
-  return config;
+  timeout: 15000,      // 请求超时时间：15秒
+  withCredentials: true // 允许携带 HttpOnly Cookie
 });
 
 // 响应拦截器：处理响应数据和错误

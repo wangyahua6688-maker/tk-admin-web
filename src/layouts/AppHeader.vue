@@ -69,7 +69,8 @@
 // 导入所需模块和组件
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { useAuthStore } from '@/store/auth';
+import { useAuthStore } from '@/features/auth/store/auth';
+import authAPI from '@/features/auth/api/auth';
 import { Bell, User, Message, SwitchButton, ArrowDown } from '@element-plus/icons-vue';
 import MessageCenter from './MessageCenter.vue';
 
@@ -102,9 +103,15 @@ const userInitial = computed(() => auth.user?.name?.charAt(0).toUpperCase() || '
 const unreadCount = ref(2); // 模拟未读消息数量
 
 // 退出登录处理函数
-function onLogout() {
-  auth.logout();
-  router.replace('/login');
+async function onLogout() {
+  try {
+    await authAPI.logout();
+  } catch (error) {
+    console.error('退出登录失败:', error);
+  } finally {
+    auth.logout();
+    router.replace('/login');
+  }
 }
 
 // 个人信息处理函数
@@ -173,5 +180,4 @@ function openMessageCenter() {
   .breadcrumb { font-size: 14px; }
 }
 </style>
-
 

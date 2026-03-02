@@ -11,6 +11,11 @@ export type RolePermissions = {
   [key: string]: string[]
 };
 
+const hasMockSession = (req: IncomingMessage): boolean => {
+  const cookie = req.headers.cookie || '';
+  return cookie.includes('session=mock-session');
+};
+
 // Mock数据
 const mockData = {
   // 登录数据
@@ -74,9 +79,35 @@ export const mockRoutes: MockRouteHandlers = {
   // 登录接口
   '/api/login': (req: IncomingMessage, res: ServerResponse) => {
     setTimeout(() => {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(mockData.login));
+      res.writeHead(200, { 
+        'Content-Type': 'application/json',
+        'Set-Cookie': 'session=mock-session; HttpOnly; Path=/; SameSite=Lax'
+      });
+      res.end(JSON.stringify({ user: mockData.login.user }));
     }, 300);
+  },
+
+  // 获取当前会话用户
+  '/api/me': (req: IncomingMessage, res: ServerResponse) => {
+    setTimeout(() => {
+      if (!hasMockSession(req)) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: '未登录' }));
+        return;
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ user: mockData.login.user }));
+    }, 200);
+  },
+
+  // 退出登录
+  '/api/logout': (req: IncomingMessage, res: ServerResponse) => {
+    setTimeout(() => {
+      res.writeHead(204, { 
+        'Set-Cookie': 'session=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax'
+      });
+      res.end();
+    }, 200);
   },
 
   // 管理员用户接口

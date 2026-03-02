@@ -1,4 +1,4 @@
-<!-- src/views/auth/Login.vue - 登录页面组件 -->
+<!-- src/features/auth/views/Login.vue - 登录页面组件 -->
 <template>
   <!-- 登录页面容器 -->
   <div class="login">
@@ -30,8 +30,9 @@
 // 导入所需模块和组件
 import { reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useAuthStore } from '@/store/auth';
-import authAPI from '@/services/api/auth';
+import { useAuthStore } from '@/features/auth/store/auth';
+import authAPI from '@/features/auth/api/auth';
+import { getSafeRedirect } from '@/utils/redirect';
 
 // 获取路由实例
 const router = useRouter();
@@ -57,13 +58,13 @@ async function onSubmit() {
       // 调用登录API
       const res = await authAPI.login(form);
       // 登录成功，保存认证信息
-      auth.login(res.token, {
+      auth.login({
         id: res.user.id,
         name: res.user.name,
         role: res.user.role
       });
       // 获取重定向路径或默认跳转到首页
-      const redirect = (route.query.redirect as string) || '/';
+      const redirect = getSafeRedirect(route.query.redirect);
       router.replace(redirect);
     } catch (error) {
       console.error('登录失败:', error);

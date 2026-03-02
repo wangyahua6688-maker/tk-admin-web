@@ -4,13 +4,20 @@
 :root {
   --primary-color: #0066ff;    /* 主色调 */
   --bg-color: #f5f7fa;         /* 背景色 */
-  --sidebar-bg: #ffffff;        /* 侧边栏背景色 */
-  --text-color: #333333;        /* 文字颜色 */
-  --text-light: #666666;        /* 浅色文字 */
-  --border-color: #eaeaea;      /* 边框颜色 */
-  --hover-color: #f5f7fa;       /* 悬停背景色 */
+  --sidebar-bg: #ffffff;       /* 侧边栏背景色 */
+  --text-color: #333333;       /* 文字颜色 */
+  --text-light: #666666;       /* 浅色文字 */
+  --border-color: #eaeaea;     /* 边框颜色 */
+  --hover-color: #f5f7fa;      /* 悬停背景色 */
   --shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.06); /* 阴影效果 */
-  --radius: 8px;                /* 圆角大小 */
+  --radius: 8px;               /* 圆角大小 */
+
+  /* 兼容旧变量命名 */
+  --bg: var(--bg-color);
+  --card: #ffffff;
+  --text: var(--text-color);
+  --muted: #6e6e73;
+  --primary: var(--primary-color);
 }
 
 /* 重置默认样式 */
@@ -18,7 +25,6 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 /* 页面基础样式 */
@@ -28,9 +34,13 @@ html, body, #app {
 }
 
 body {
+  margin: 0;
   background-color: var(--bg-color);
   color: var(--text-color);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Element Plus 样式覆盖 */
@@ -96,6 +106,14 @@ body {
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+/* 全局页脚样式 */
+.app-footer {
+  text-align: center;
+  padding: 24px;
+  color: var(--text-light);
+  font-size: 12px;
 }
 
 .el-table th {

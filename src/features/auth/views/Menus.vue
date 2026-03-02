@@ -1,4 +1,4 @@
-<!-- src/views/auth/Menus.vue - 菜单管理页面组件 -->
+<!-- src/features/auth/views/Menus.vue - 菜单管理页面组件 -->
 <template>
   <!-- 菜单管理容器 -->
   <div>
@@ -163,7 +163,7 @@
 // 菜单管理页面逻辑
 // 导入所需模块和组件
 import { computed, reactive, ref, onUnmounted } from 'vue';
-import menuAPI, { Menu, CreateMenuData, UpdateMenuData } from '@/services/api/menus';
+import menuAPI, { Menu, CreateMenuData, UpdateMenuData } from '@/features/auth/api/menus';
 import * as Icons from '@element-plus/icons-vue';
 import { Edit, Delete } from '@element-plus/icons-vue';
 

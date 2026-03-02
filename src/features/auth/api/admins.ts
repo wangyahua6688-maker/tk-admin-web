@@ -1,6 +1,6 @@
-// src/services/api/admins.ts - 管理员用户相关API接口
+// src/features/auth/api/admins.ts - 管理员用户相关API接口
 // 导入HTTP客户端实例
-import http from '../http';
+import http from '@/services/http';
 
 // 管理员用户信息接口定义
 export interface AdminUser {

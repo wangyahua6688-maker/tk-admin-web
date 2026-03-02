@@ -3,10 +3,10 @@
 import { RouteRecordRaw } from 'vue-router';
 
 // 导入各模块路由配置
-import loginRoute from './auth/login';           // 登录路由
-import dashboardRoutes from './dashboard';       // 仪表盘路由
-import userRoutes from './users';               // 用户管理路由
-import authRoutes from './auth';                // 权限管理路由
+import loginRoute from '@/features/auth/routes/login';           // 登录路由
+import dashboardRoutes from '@/features/dashboard/routes';       // 仪表盘路由
+import userRoutes from '@/features/users/routes';               // 用户管理路由
+import authRoutes from '@/features/auth/routes';                // 权限管理路由
 
 // 定义路由配置数组
 const routes: RouteRecordRaw[] = [

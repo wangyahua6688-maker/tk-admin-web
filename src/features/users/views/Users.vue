@@ -1,4 +1,4 @@
-<!-- src/views/users/Users.vue - 用户管理页面组件 -->
+<!-- src/features/users/views/Users.vue - 用户管理页面组件 -->
 <template>
   <!-- 用户管理容器 -->
   <div>
@@ -81,7 +81,7 @@
 // 用户管理页面逻辑
 // 导入所需模块和组件
 import { computed, reactive, ref } from 'vue';
-import userAPI, { type User, CreateUserData, UpdateUserData } from '@/services/api/users';
+import userAPI, { type User, CreateUserData, UpdateUserData } from '@/features/users/api/users';
 import { Edit, Delete } from '@element-plus/icons-vue';
 
 // 搜索关键词

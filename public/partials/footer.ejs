@@ -1,4 +1,3 @@
-<footer style="text-align:center;padding:24px;color:var(--muted);font-size:12px;">
-  © <script>document.write(new Date().getFullYear())</script> Apple Admin. All rights reserved.
+<footer class="app-footer">
+  © <%= typeof buildYear !== 'undefined' ? buildYear : new Date().getFullYear() %> Apple Admin. All rights reserved.
 </footer>
-

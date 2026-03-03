@@ -1,60 +1,126 @@
-// src/router/guards.ts - 路由守卫API文件
-// 负责处理路由前置守卫和后置守卫逻辑
-
-import { Router } from 'vue-router';
+import type { Router } from 'vue-router';
 import { useAuthStore } from '@/features/auth/store/auth';
+import { useNavigationStore } from '@/features/rbac/store/navigation';
 
 /**
- * 设置路由守卫
- * @param router 路由实例
+ * 路由守卫。
+ * 核心流程：
+ * 1. 校验登录态；
+ * 2. 加载后端菜单并动态注册路由；
+ * 3. 按 RBAC 判断页面访问权限。
  */
 export function setupRouterGuards(router: Router) {
-  // 路由前置守卫 - 在每次路由跳转前执行
   router.beforeEach(async (to) => {
-    const auth = useAuthStore(); // 获取认证状态
+    const auth = useAuthStore();
+    const navigation = useNavigationStore();
 
-    // 0. 初始化会话（基于 HttpOnly Cookie）
+    // 首次路由切换先恢复会话。
     if (!auth.sessionChecked) {
       await auth.bootstrap();
     }
-    
-    // 1. 处理公共路由（如登录页）
-    if (to.meta.public) {
-      // 已登录用户尝试访问登录页，重定向到首页
-      if (auth.isAuthenticated && to.path === '/login') {
-        return { path: '/' };
+
+    // 兜底路由特殊处理：
+    // 1. 直接刷新动态页面时，初始匹配可能先落到 NotFound；
+    // 2. 若已登录则先初始化菜单并重试当前路径，避免误判为 404。
+    if (to.name === 'NotFound') {
+      if (!auth.isAuthenticated) {
+        return {
+          path: '/login',
+          query: { redirect: to.fullPath }
+        };
       }
-      return true; // 允许访问公共路由
+
+      if (!navigation.initialized) {
+        try {
+          await navigation.init(router);
+        } catch {
+          navigation.reset(router);
+          auth.clearAuth();
+          return {
+            path: '/login',
+            query: { redirect: to.fullPath }
+          };
+        }
+
+        return {
+          path: to.fullPath,
+          replace: true
+        };
+      }
+
+      // 已初始化后，如果该路径确实可访问，则重试一次触发动态路由匹配。
+      if (navigation.canAccess(to.path)) {
+        return {
+          path: to.fullPath,
+          replace: true
+        };
+      }
     }
-    
-    // 2. 验证登录状态 - 未登录用户重定向到登录页
+
+    // 公共路由（登录页、404 等）直接放行。
+    if (to.meta.public) {
+      if (to.path === '/login' && auth.isAuthenticated) {
+        if (!navigation.initialized) {
+          await navigation.init(router);
+        }
+        return navigation.firstPath || '/403';
+      }
+      return true;
+    }
+
+    // 未登录统一跳登录页。
     if (!auth.isAuthenticated) {
-      return { path: '/login', query: { redirect: to.fullPath } };
+      return {
+        path: '/login',
+        query: { redirect: to.fullPath }
+      };
     }
-    
-    // 3. 权限验证 (如果需要)
-    // 此处可以根据实际需求添加角色或权限验证逻辑
-    // 例如：if (!hasPermission(auth.user.roles, to.meta.requiredRoles)) { ... }
-    
-    // 4. 继续导航
+
+    // 登录后首次进入时，拉菜单并注册动态路由。
+    if (!navigation.initialized) {
+      try {
+        await navigation.init(router);
+      } catch {
+        // 菜单加载失败通常意味着 token 异常或权限配置错误，直接回登录页。
+        navigation.reset(router);
+        auth.clearAuth();
+        return {
+          path: '/login',
+          query: { redirect: to.fullPath }
+        };
+      }
+
+      // 动态路由注册完成后，重新进入当前路径，触发路由重新匹配。
+      return {
+        path: to.fullPath,
+        replace: true
+      };
+    }
+
+    // 默认入口统一跳首个可访问菜单页面。
+    if (to.path === '/') {
+      return navigation.firstPath || '/403';
+    }
+
+    // 403 页面允许访问。
+    if (to.path === '/403') {
+      return true;
+    }
+
+    // 未授权菜单路径统一拦截到 403。
+    if (!navigation.canAccess(to.path)) {
+      return '/403';
+    }
+
     return true;
   });
 
-  // 路由错误处理 - 捕获路由加载或解析过程中的错误
   router.onError((error) => {
-    console.error('路由错误:', error);
-    // 可以在这里添加错误处理逻辑，例如跳转到错误页面
+    console.error('路由加载失败:', error);
   });
 
-  // 路由后置守卫 - 在路由跳转完成后执行
-  router.afterEach((to, from) => {
-    // 可以在这里添加页面访问统计、面包屑更新等逻辑
-    
-    // 设置页面标题
-    if (to.meta.title) {
-      document.title = `${to.meta.title} - 管理系统`;
-    } else {
-      document.title = '管理系统';
-    }
+  router.afterEach((to) => {
+    const title = typeof to.meta.title === 'string' ? to.meta.title : '后台管理';
+    document.title = `${title} - Go Admin`;
   });
 }

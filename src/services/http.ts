@@ -1,43 +1,140 @@
-// src/services/http.ts - HTTP客户端封装
-// 使用 axios 进行 HTTP 请求
-import axios from 'axios';
-import { useAuthStore } from '@/features/auth/store/auth'; // 导入认证状态管理
-import router from '@/router'; // 导入路由实例
+import axios, {
+  type AxiosError,
+  type AxiosRequestConfig,
+  type InternalAxiosRequestConfig
+} from 'axios';
 
-// 创建 axios 实例，设置基础 URL 和超时时间
-const http = axios.create({
-  baseURL: '/api',     // API 的基础路径
-  timeout: 15000,      // 请求超时时间：15秒
-  withCredentials: true // 允许携带 HttpOnly Cookie
+/**
+ * 后端通用响应结构。
+ */
+interface ApiEnvelope<T = unknown> {
+  code?: number;
+  msg?: string;
+  data?: T;
+  error?: string;
+}
+
+const ACCESS_TOKEN_KEY = 'access_token';
+const REFRESH_TOKEN_KEY = 'refresh_token';
+
+function getDeviceId(): string {
+  const key = 'device_id';
+  const cached = localStorage.getItem(key);
+  if (cached) return cached;
+
+  const id = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  localStorage.setItem(key, id);
+  return id;
+}
+
+function redirectToLogin() {
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
+
+  const current = `${window.location.pathname}${window.location.search}`;
+  const target = `/login?redirect=${encodeURIComponent(current)}`;
+
+  if (!window.location.pathname.startsWith('/login')) {
+    window.location.replace(target);
+  }
+}
+
+const instance = axios.create({
+  baseURL: '',
+  timeout: 15000,
+  headers: {
+    'Content-Type': 'application/json'
+  }
 });
 
-// 响应拦截器：处理响应数据和错误
-http.interceptors.response.use(
-  (res) => res.data,  // 直接返回响应数据
-  async (err) => {
-    const status = err?.response?.status;
-    const auth = useAuthStore();
-    
-    // 401 未认证错误：清除本地认证信息并跳转到登录页
-    if (status === 401) {
-      auth.logout();
-      if (router.currentRoute.value.path !== '/login') {
-        const redirect = encodeURIComponent(router.currentRoute.value.fullPath);
-        await router.replace(`/login?redirect=${redirect}`);
+instance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  config.headers['X-Device-ID'] = getDeviceId();
+  return config;
+});
+
+function unwrapResponse<T>(payload: ApiEnvelope<T> | T): T {
+  if (payload && typeof payload === 'object') {
+    const obj = payload as ApiEnvelope<T>;
+
+    if (typeof obj.code === 'number') {
+      if (obj.code === 0) {
+        return (obj.data as T) ?? ({} as T);
       }
+
+      if (obj.code === 401) {
+        redirectToLogin();
+      }
+
+      throw new Error(obj.msg || '请求失败');
     }
-    
-    // 403 权限错误：可以在此处添加全局提示
+
+    if (Object.prototype.hasOwnProperty.call(obj, 'data') && Object.keys(obj).length === 1) {
+      return obj.data as T;
+    }
+
+    if (typeof obj.error === 'string' && obj.error.trim()) {
+      throw new Error(obj.error);
+    }
+  }
+
+  return payload as T;
+}
+
+instance.interceptors.response.use(
+  (response) => unwrapResponse(response.data),
+  (error: AxiosError<ApiEnvelope>) => {
+    const status = error.response?.status;
+    const data = error.response?.data;
+
+    if (status === 401) {
+      redirectToLogin();
+      return Promise.reject(new Error('登录状态已过期，请重新登录'));
+    }
+
     if (status === 403) {
-      // 可在此触发全局消息提示，无权限访问
-      // ElMessage.error?.('无权限访问该资源');
+      return Promise.reject(new Error(data?.msg || data?.error || '没有权限访问该资源'));
     }
-    
-    // 获取错误信息并返回拒绝的 Promise
-    const message = err?.response?.data?.message || err.message || '请求失败';
-    return Promise.reject(new Error(message));
+
+    if (status === 404) {
+      return Promise.reject(new Error(data?.msg || data?.error || '请求的资源不存在'));
+    }
+
+    if (status && status >= 500) {
+      return Promise.reject(new Error(data?.msg || data?.error || '服务器内部错误'));
+    }
+
+    return Promise.reject(new Error(data?.msg || data?.error || error.message || '网络请求失败'));
   }
 );
 
-// 导出封装好的 HTTP 客户端实例
+/**
+ * 对 axios 做一次轻量封装，确保调用处直接拿到业务数据而不是 AxiosResponse。
+ */
+const http = {
+  get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> {
+    return instance.get(url, config) as unknown as Promise<T>;
+  },
+
+  post<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
+    return instance.post(url, data, config) as unknown as Promise<T>;
+  },
+
+  put<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
+    return instance.put(url, data, config) as unknown as Promise<T>;
+  },
+
+  patch<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
+    return instance.patch(url, data, config) as unknown as Promise<T>;
+  },
+
+  delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> {
+    return instance.delete(url, config) as unknown as Promise<T>;
+  }
+};
+
 export default http;

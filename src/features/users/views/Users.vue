@@ -1,195 +1,422 @@
-<!-- src/features/users/views/Users.vue - 用户管理页面组件 -->
 <template>
-  <!-- 用户管理容器 -->
   <div>
-    <!-- 页面标题 -->
-    <h2 class="page-title">用户管理</h2>
-    <!-- 工具栏 -->
-    <div class="toolbar">
-      <!-- 搜索框 -->
-      <el-input v-model="q" placeholder="搜索用户" style="width:260px" clearable />
-      <!-- 新增用户按钮 -->
+    <h2 class="page-title">用户与角色管理</h2>
+
+    <div class="toolbar card">
+      <el-input v-model="keyword" placeholder="按用户名/邮箱/角色搜索" clearable style="max-width: 360px" />
       <el-button type="primary" @click="openCreate">新增用户</el-button>
     </div>
-    <!-- 表格容器 -->
+
     <div class="card">
-      <!-- 用户列表表格 -->
-      <el-table :data="filtered" stripe>
-        <!-- 姓名列 -->
-        <el-table-column prop="name" label="姓名" />
-        <!-- 邮箱列 -->
-        <el-table-column prop="email" label="邮箱" />
-        <!-- 角色列 -->
-        <el-table-column prop="role" label="角色" />
-        <!-- 操作列 -->
-        <el-table-column label="操作" width="100" fixed="right" align="center">
+      <el-table :data="filteredUsers" stripe>
+        <el-table-column label="头像" width="90" align="center">
+          <template #default="{ row }">
+            <el-avatar :size="34" :src="row.avatar || undefined">
+              {{ row.username?.slice(0, 1)?.toUpperCase() || 'U' }}
+            </el-avatar>
+          </template>
+        </el-table-column>
+        <el-table-column prop="username" label="用户名" min-width="140" />
+        <el-table-column prop="email" label="邮箱" min-width="220" />
+
+        <el-table-column label="角色" min-width="220">
+          <template #default="{ row }">
+            <div v-if="row.roleNames.length > 0" class="role-tags">
+              <el-tag v-for="name in row.roleNames" :key="name" size="small" effect="plain">{{ name }}</el-tag>
+            </div>
+            <span v-else class="empty-role">未分配</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.status ? 'success' : 'danger'">{{ row.status ? '启用' : '禁用' }}</el-tag>
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="createdAt" label="创建时间" min-width="180" />
+
+        <el-table-column label="操作" width="240" fixed="right" align="center">
           <template #default="{ row }">
             <div class="action-buttons">
-              <!-- 编辑按钮 -->
-              <el-tooltip content="编辑" placement="top">
-                <el-button text size="small" @click="edit(row)">
-                  <el-icon><Edit /></el-icon>
-                </el-button>
-              </el-tooltip>
-              <!-- 删除按钮 -->
-              <el-tooltip content="删除" placement="top">
-                <el-button text size="small" type="danger" @click="remove(row)">
-                  <el-icon><Delete /></el-icon>
-                </el-button>
-              </el-tooltip>
+              <el-button text size="small" @click="openEdit(row)">编辑</el-button>
+              <el-button
+                text
+                size="small"
+                type="primary"
+                :disabled="isCurrentLoginUser(row)"
+                @click="openBindRoles(row)"
+              >
+                分配角色
+              </el-button>
+              <el-button text size="small" type="danger" @click="remove(row)">删除</el-button>
             </div>
           </template>
         </el-table-column>
       </el-table>
-      <!-- 分页组件 -->
-      <el-pagination
-        v-model:current-page="page"
-        v-model:page-size="size"
-        :total="filtered.length"
-        layout="prev, pager, next"
-        class="pager"
-      />
     </div>
 
-    <!-- 用户编辑对话框 -->
-    <el-dialog v-model="dialogVisible" :title="editing ? '编辑用户' : '新增用户'" :width="dialogWidth" destroy-on-close>
-      <!-- 用户表单 -->
+    <el-dialog v-model="dialogVisible" :title="editing ? '编辑用户' : '新增用户'" width="520px" destroy-on-close>
       <el-form :model="form" label-position="top">
-        <!-- 姓名输入框 -->
-        <el-form-item label="姓名"><el-input v-model="form.name" /></el-form-item>
-        <!-- 邮箱输入框 -->
-        <el-form-item label="邮箱"><el-input v-model="form.email" /></el-form-item>
-        <!-- 角色选择器 -->
-        <el-form-item label="角色">
-          <el-select v-model="form.role" style="width:100%">
-            <el-option label="管理员" value="admin" />
-            <el-option label="编辑" value="editor" />
-            <el-option label="访客" value="viewer" />
-          </el-select>
+        <el-form-item label="用户名" required>
+          <el-input v-model="form.username" :disabled="editing" maxlength="100" />
+        </el-form-item>
+
+        <el-form-item label="邮箱" required>
+          <el-input v-model="form.email" maxlength="255" />
+        </el-form-item>
+
+        <el-form-item label="头像地址">
+          <el-input v-model="form.avatar" maxlength="255" placeholder="https://example.com/avatar.png" />
+          <div class="avatar-preview-wrap">
+            <span class="avatar-preview-label">预览：</span>
+            <el-avatar :size="32" :src="form.avatar || undefined">
+              {{ form.username?.slice(0, 1)?.toUpperCase() || 'U' }}
+            </el-avatar>
+          </div>
+        </el-form-item>
+
+        <el-form-item label="密码" :required="!editing">
+          <el-input
+            v-model="form.password"
+            type="password"
+            show-password
+            :placeholder="editing ? '不修改请留空' : '请输入密码（至少8位）'"
+          />
+        </el-form-item>
+
+        <el-form-item label="状态">
+          <el-switch v-model="form.status" active-text="启用" inactive-text="禁用" />
         </el-form-item>
       </el-form>
-      <!-- 对话框底部操作按钮 -->
+
       <template #footer>
-        <el-button @click="dialogVisible=false">取消</el-button>
-        <el-button type="primary" @click="save">保存</el-button>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="saving" @click="save">保存</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="roleDialogVisible" title="分配用户角色" width="560px" destroy-on-close>
+      <div class="dialog-subtitle">
+        当前用户：<strong>{{ currentUser?.username || '-' }}</strong>
+      </div>
+
+      <el-checkbox-group v-model="selectedRoleIds" class="role-checkbox-group">
+        <el-checkbox v-for="role in roles" :key="role.id" :value="role.id">
+          {{ role.name }}（{{ role.code }}）
+        </el-checkbox>
+      </el-checkbox-group>
+
+      <template #footer>
+        <el-button @click="roleDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="savingRoles" @click="submitBindRoles">保存</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-// 用户管理页面逻辑
-// 导入所需模块和组件
-import { computed, reactive, ref } from 'vue';
-import userAPI, { type User, CreateUserData, UpdateUserData } from '@/features/users/api/users';
-import { Edit, Delete } from '@element-plus/icons-vue';
+import { computed, onMounted, reactive, ref } from 'vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import { useAuthStore } from '@/features/auth/store/auth';
+import userAPI, { type User, type CreateUserData, type UpdateUserData } from '@/features/users/api/users';
+import roleAPI, { type Role } from '@/features/rbac/api/roles';
+import userRoleAPI from '@/features/rbac/api/user-roles';
 
-// 搜索关键词
-const q = ref('');
+interface UserRow extends User {
+  roleIds: string[];
+  roleNames: string[];
+}
 
-// 响应式弹窗宽度 - 根据屏幕宽度调整对话框大小
-const dialogWidth = computed(() => {
-  const width = window.innerWidth;
-  if (width < 768) return '90%';
-  if (width < 1200) return '60%';
-  return '40%';
-});
+const auth = useAuthStore();
+const keyword = ref('');
+const users = ref<UserRow[]>([]);
+const roles = ref<Role[]>([]);
 
-// 分页相关状态
-const page = ref(1);
-const size = ref(10);
-
-// 用户列表数据
-const users = ref<User[]>([]);
-
-// 加载用户列表
-const loadUsers = async () => {
-  try {
-    users.value = await userAPI.getUsers();
-  } catch (error) {
-    console.error('加载用户列表失败:', error);
-  }
-};
-
-// 过滤后的用户列表 - 根据搜索关键词过滤
-const filtered = computed(() => users.value.filter(u =>
-  [u.name, u.email, u.role].join(' ').toLowerCase().includes(q.value.toLowerCase())
-));
-
-// 对话框相关状态
 const dialogVisible = ref(false);
 const editing = ref(false);
+const saving = ref(false);
 
-// 表单数据
-const form = reactive<User>({ id: '', name: '', email: '', role: 'viewer' });
+/**
+ * 用户角色绑定弹窗状态。
+ */
+const roleDialogVisible = ref(false);
+const currentUser = ref<UserRow | null>(null);
+const selectedRoleIds = ref<string[]>([]);
+const savingRoles = ref(false);
 
-// 打开新增用户对话框
-function openCreate() {
-  Object.assign(form, { id: '', name: '', email: '', role: 'viewer' });
-  editing.value = false;
-  dialogVisible.value = true;
-}
+const form = reactive<{
+  id: string;
+  username: string;
+  email: string;
+  avatar: string;
+  password: string;
+  status: boolean;
+}>({
+  id: '',
+  username: '',
+  email: '',
+  avatar: '',
+  password: '',
+  status: true
+});
 
-// 编辑用户
-function edit(row: User) {
-  Object.assign(form, row);
-  editing.value = true;
-  dialogVisible.value = true;
-}
+const filteredUsers = computed(() => {
+  const q = keyword.value.trim().toLowerCase();
+  if (!q) return users.value;
+  return users.value.filter((user) => {
+    const roleText = user.roleNames.join(' ');
+    return `${user.username} ${user.email} ${roleText}`.toLowerCase().includes(q);
+  });
+});
 
-// 保存用户
-async function save() {
-  try {
-    if (editing.value) {
-      // 更新用户
-      const updatedUser = await userAPI.updateUser(form.id, form as UpdateUserData);
-      const idx = users.value.findIndex(u => u.id === form.id);
-      users.value[idx] = updatedUser;
-    } else {
-      // 创建新用户
-      const newUser = await userAPI.createUser(form as CreateUserData);
-      users.value.unshift(newUser);
+/**
+ * 重新加载角色列表（去重）。
+ */
+async function reloadRoles() {
+  const raw = (await roleAPI.getRoles()).filter((role) => role.id);
+  const map = new Map<string, Role>();
+  raw.forEach((role) => {
+    if (!map.has(role.id)) {
+      map.set(role.id, role);
     }
-    dialogVisible.value = false;
-  } catch (error) {
-    console.error('保存用户失败:', error);
-  }
+  });
+  roles.value = Array.from(map.values());
 }
 
-// 删除用户
-async function remove(row: User) {
+/**
+ * 加载用户列表并拼接角色信息。
+ */
+async function reloadUsers() {
+  const baseUsers = await userAPI.getUsers();
+
+  const rows = await Promise.all(
+    baseUsers.map(async (user): Promise<UserRow> => {
+      try {
+        const boundRoles = await userRoleAPI.getUserRoles(user.id);
+        const roleIds = Array.from(new Set(boundRoles.map((role) => role.id).filter((id) => id)));
+        const roleNames = Array.from(new Set(boundRoles.map((role) => role.name).filter((name) => name)));
+
+        return {
+          ...user,
+          roleIds,
+          roleNames
+        };
+      } catch {
+        // 某个用户角色查询失败时，保证主列表仍可展示。
+        return {
+          ...user,
+          roleIds: [],
+          roleNames: []
+        };
+      }
+    })
+  );
+
+  users.value = rows;
+}
+
+function openCreate() {
+  editing.value = false;
+  Object.assign(form, {
+    id: '',
+    username: '',
+    email: '',
+    avatar: '',
+    password: '',
+    status: true
+  });
+  dialogVisible.value = true;
+}
+
+function openEdit(user: UserRow) {
+  editing.value = true;
+  Object.assign(form, {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    avatar: user.avatar || '',
+    password: '',
+    status: user.status
+  });
+  dialogVisible.value = true;
+}
+
+function validateForm(): boolean {
+  if (!form.username.trim()) {
+    ElMessage.warning('用户名不能为空');
+    return false;
+  }
+
+  if (!form.email.trim()) {
+    ElMessage.warning('邮箱不能为空');
+    return false;
+  }
+
+  if (!editing.value && form.password.trim().length < 8) {
+    ElMessage.warning('新增用户密码长度至少8位');
+    return false;
+  }
+
+  return true;
+}
+
+async function save() {
+  if (!validateForm()) return;
+
+  saving.value = true;
   try {
-    await userAPI.deleteUser(row.id);
-    users.value = users.value.filter(u => u.id !== row.id);
-  } catch (error) {
-    console.error('删除用户失败:', error);
+    if (!editing.value) {
+      const payload: CreateUserData = {
+        username: form.username.trim(),
+        email: form.email.trim(),
+        avatar: form.avatar.trim(),
+        password: form.password,
+        status: form.status
+      };
+      await userAPI.createUser(payload);
+      ElMessage.success('用户创建成功');
+    } else {
+      const payload: UpdateUserData = {
+        username: form.username.trim(),
+        email: form.email.trim(),
+        avatar: form.avatar.trim(),
+        status: form.status
+      };
+
+      if (form.password.trim()) {
+        payload.password = form.password;
+      }
+
+      await userAPI.updateUser(form.id, payload);
+      ElMessage.success('用户更新成功');
+    }
+
+    dialogVisible.value = false;
+    await reloadUsers();
+  } finally {
+    saving.value = false;
   }
 }
 
-// 初始化加载用户数据
-loadUsers();
+async function remove(user: UserRow) {
+  await ElMessageBox.confirm(`确认删除用户【${user.username}】吗？`, '删除确认', {
+    type: 'warning'
+  });
+
+  await userAPI.deleteUser(user.id);
+  users.value = users.value.filter((item) => item.id !== user.id);
+  ElMessage.success('用户删除成功');
+}
+
+/**
+ * 打开角色绑定弹窗并加载已分配角色。
+ */
+async function openBindRoles(user: UserRow) {
+  if (isCurrentLoginUser(user)) {
+    ElMessage.warning('当前登录账号不可在此页面修改角色');
+    return;
+  }
+
+  if (roles.value.length === 0) {
+    await reloadRoles();
+  }
+
+  currentUser.value = user;
+
+  try {
+    const boundRoles = await userRoleAPI.getUserRoles(user.id);
+    selectedRoleIds.value = Array.from(new Set(boundRoles.map((role) => role.id).filter((id) => id)));
+  } catch {
+    selectedRoleIds.value = Array.from(new Set(user.roleIds));
+  }
+
+  roleDialogVisible.value = true;
+}
+
+/**
+ * 保存用户角色绑定。
+ */
+async function submitBindRoles() {
+  if (!currentUser.value) return;
+
+  savingRoles.value = true;
+  try {
+    await userRoleAPI.bindUserRoles(currentUser.value.id, selectedRoleIds.value);
+    ElMessage.success('用户角色保存成功');
+    roleDialogVisible.value = false;
+    await reloadUsers();
+  } catch (error: any) {
+    ElMessage.error(error?.message || '用户角色保存失败');
+  } finally {
+    savingRoles.value = false;
+  }
+}
+
+/**
+ * 当前登录用户禁止修改自身角色（与后端安全策略保持一致）。
+ */
+function isCurrentLoginUser(user: Pick<User, 'id'>): boolean {
+  return String(user.id) === String(auth.user?.id || '');
+}
+
+onMounted(() => {
+  void Promise.all([reloadRoles(), reloadUsers()]);
+});
 </script>
 
 <style scoped>
-/* 用户管理页面样式 */
 .toolbar {
   display: flex;
-  gap: 12px;
   justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 4px;
-  justify-content: center;
   align-items: center;
-  white-space: nowrap;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
-.pager {
-  margin-top: 20px;
-  justify-content: center;
+.role-tags {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.empty-role {
+  color: var(--text-secondary);
+}
+
+.avatar-preview-wrap {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatar-preview-label {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.dialog-subtitle {
+  margin-bottom: 14px;
+  color: var(--text-secondary);
+}
+
+.role-checkbox-group {
   display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 8px;
+  border-radius: 10px;
+  background: #f6f8fb;
+}
+
+@media (max-width: 768px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 </style>

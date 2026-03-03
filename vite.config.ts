@@ -1,7 +1,13 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import vue from '@vitejs/plugin-vue';
-import { createHtmlPlugin } from 'vite-plugin-html';
 import path from 'path';
+
+/**
+ * 开发环境默认代理目标。
+ * 可通过 .env.development 覆盖，例如：
+ * VITE_API_TARGET=http://localhost:8081
+ */
+const DEFAULT_API_TARGET = 'http://localhost:8080';
 
 const cspProd = [
   "default-src 'self'",
@@ -10,8 +16,8 @@ const cspProd = [
   "frame-ancestors 'none'",
   "form-action 'self'",
   "img-src 'self' data: blob:",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com",
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self' data:",
   "script-src 'self'",
   "connect-src 'self'"
 ].join('; ');
@@ -23,15 +29,18 @@ const cspDev = [
   "frame-ancestors 'none'",
   "form-action 'self'",
   "img-src 'self' data: blob:",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com",
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self' data:",
   "script-src 'self' 'unsafe-eval'",
   "connect-src 'self' ws://localhost:5173 ws://127.0.0.1:5173 http://localhost:5173 http://127.0.0.1:5173"
 ].join('; ');
 
 export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
   const isDev = mode === 'development';
-  const baseHeaders = {
+  const apiTarget = env.VITE_API_TARGET || DEFAULT_API_TARGET;
+
+  const securityHeaders = {
     'X-Frame-Options': 'DENY',
     'X-Content-Type-Options': 'nosniff',
     'Referrer-Policy': 'no-referrer',
@@ -39,12 +48,7 @@ export default defineConfig(({ mode }) => {
   };
 
   return {
-    plugins: [
-      vue(),
-      createHtmlPlugin({ 
-        inject: { data: { appTitle: 'Apple Admin', buildYear: new Date().getFullYear() } } 
-      })
-    ],
+    plugins: [vue()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, 'src')
@@ -54,20 +58,23 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       open: true,
       headers: {
-        ...baseHeaders,
+        ...securityHeaders,
         'Content-Security-Policy': isDev ? cspDev : cspProd
       },
       proxy: {
         '/api': {
-          target: 'http://localhost:8080', // 后端服务地址
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, '')
+          target: apiTarget,
+          changeOrigin: true
+        },
+        '/auth': {
+          target: apiTarget,
+          changeOrigin: true
         }
       }
     },
     preview: {
       headers: {
-        ...baseHeaders,
+        ...securityHeaders,
         'Content-Security-Policy': cspProd
       }
     }

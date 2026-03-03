@@ -1,91 +1,81 @@
-// src/features/users/api/users.ts - 用户管理相关API接口
-// 导入HTTP客户端实例
 import http from '@/services/http';
 
-// 用户信息接口定义
+/**
+ * 用户模型（前端展示结构）。
+ */
 export interface User {
-  id: string;           // 用户ID
-  username: string;     // 用户名
-  email: string;        // 邮箱
-  roleIds: string[];    // 角色ID列表
-  status: boolean;      // 用户状态（启用/禁用）
-  createdAt: string;    // 创建时间
-  updatedAt: string;    // 更新时间
+  id: string;
+  username: string;
+  email: string;
+  avatar: string;
+  status: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
-// 创建用户请求参数接口定义
 export interface CreateUserData {
-  username: string;     // 用户名
-  email: string;        // 邮箱
-  password: string;     // 密码
-  roleIds: string[];    // 角色ID列表
-  status: boolean;      // 用户状态
+  username: string;
+  email: string;
+  avatar?: string;
+  password: string;
+  status: boolean;
 }
 
-// 更新用户请求参数接口定义
 export interface UpdateUserData {
-  username: string;     // 用户名
-  email: string;        // 邮箱
-  roleIds: string[];    // 角色ID列表
-  status: boolean;      // 用户状态
-  password?: string;    // 密码（可选）
+  username: string;
+  email: string;
+  avatar?: string;
+  password?: string;
+  status: boolean;
 }
 
-// 用户管理相关API接口对象
+function normalizeUser(raw: any): User {
+  return {
+    id: String(raw.id ?? raw.ID ?? ''),
+    username: raw.username || '',
+    email: raw.email || '',
+    avatar: raw.avatar || '',
+    status: Number(raw.status) === 1,
+    createdAt: raw.created_at || '',
+    updatedAt: raw.updated_at || ''
+  };
+}
+
 export const userAPI = {
-  // 获取用户列表接口
-  getUsers: async (): Promise<User[]> => {
-    try {
-      const res = await http.get('/users'); // 发送GET请求
-      return (res as any) || []; // 返回用户列表数据
-    } catch (error) {
-      console.error('获取用户列表失败:', error);
-      throw error; // 抛出错误供调用方处理
-    }
+  async getUsers(): Promise<User[]> {
+    const res = await http.get<any[]>('/api/users/');
+    return Array.isArray(res) ? res.map(normalizeUser) : [];
   },
 
-  // 创建新用户接口
-  createUser: async (data: CreateUserData): Promise<User> => {
-    try {
-      const res = await http.post('/users', data); // 发送POST请求
-      return res as any; // 返回创建的用户数据
-    } catch (error) {
-      console.error('创建用户失败:', error);
-      throw error; // 抛出错误供调用方处理
-    }
+  async createUser(data: CreateUserData): Promise<User> {
+    const res = await http.post<any>('/api/users/', {
+      username: data.username,
+      email: data.email,
+      avatar: data.avatar || '',
+      password: data.password,
+      status: data.status ? 1 : 0
+    });
+    return normalizeUser(res);
   },
 
-  // 更新用户接口
-  updateUser: async (id: string, data: UpdateUserData): Promise<User> => {
-    try {
-      const res = await http.put(`/users/${id}`, data); // 发送PUT请求
-      return res as any; // 返回更新后的用户数据
-    } catch (error) {
-      console.error('更新用户失败:', error);
-      throw error; // 抛出错误供调用方处理
+  async updateUser(id: string, data: UpdateUserData): Promise<User> {
+    const payload: Record<string, any> = {
+      email: data.email,
+      avatar: data.avatar || '',
+      status: data.status ? 1 : 0
+    };
+
+    if (data.password) {
+      payload.password = data.password;
     }
+
+    const res = await http.put<any>(`/api/users/${id}`, payload);
+    return normalizeUser(res);
   },
 
-  // 删除用户接口
-  deleteUser: async (id: string): Promise<void> => {
-    try {
-      await http.delete(`/users/${id}`); // 发送DELETE请求
-    } catch (error) {
-      console.error('删除用户失败:', error);
-      throw error; // 抛出错误供调用方处理
-    }
-  },
-
-  // 切换用户状态接口
-  toggleUserStatus: async (id: string, status: boolean): Promise<void> => {
-    try {
-      await http.patch(`/users/${id}/status`, { status }); // 发送PATCH请求
-    } catch (error) {
-      console.error('切换用户状态失败:', error);
-      throw error; // 抛出错误供调用方处理
-    }
+  async deleteUser(id: string): Promise<void> {
+    await http.delete(`/api/users/${id}`);
   }
 };
 
-// 导出用户管理API接口对象
 export default userAPI;

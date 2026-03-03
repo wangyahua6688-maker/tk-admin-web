@@ -1,74 +1,53 @@
-// src/features/auth/api/auth.ts - 认证相关API接口
-// 导入HTTP客户端实例
 import http from '@/services/http';
 
-// 登录请求参数接口定义
+/**
+ * 登录请求参数。
+ */
 export interface LoginPayload {
-  username: string;  // 用户名
-  password: string;  // 密码
+  username: string;
+  password: string;
 }
 
-// 用户信息接口定义
-export interface AuthUser {
-  id: string;      // 用户ID
-  name: string;    // 用户名
-  role: string;    // 用户角色
-}
-
-// 登录响应数据接口定义
+/**
+ * 登录/刷新响应结构。
+ */
 export interface LoginResponse {
-  user: AuthUser;
+  access_token: string;
+  refresh_token: string;
+  user_id: number;
+  username: string;
+  expires_in: number;
 }
 
-// 会话信息接口定义
-export interface SessionResponse {
-  user: AuthUser;
+/**
+ * 当前用户资料结构。
+ */
+export interface ProfileResponse {
+  id: number;
+  username: string;
+  email: string;
+  avatar?: string;
+  status: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
-// 认证相关API接口对象
 const authAPI = {
-
-  // fixme 模拟登录
   async login(payload: LoginPayload): Promise<LoginResponse> {
-    // --- 模拟登录开关 ---
-    if (process.env.NODE_ENV === 'development') {
-      console.log('正在执行模拟登录...', payload);
-      // 模拟网络延迟
-      await new Promise(resolve => setTimeout(resolve, 800));
-
-      // 模拟登录逻辑
-      if (payload.username === 'admin' && payload.password === '123456') {
-        return {
-          token: 'mock-token-apple-style-admin',
-          user: { id: 1, username: '管理员', role: 'admin' }
-        } as unknown as LoginResponse;
-      } else {
-        throw new Error('用户名或密码错误');
-      }
-    }
-    // --- 正常逻辑 ---
-    const res = await http.post('/login', payload);
-    return res as unknown as LoginResponse;
+    return await http.post('/auth/login', payload);
   },
 
-
-  //fixme 暂时 // 用户登录接口
-  // async login(payload: LoginPayload): Promise<LoginResponse> {
-  //   const res = await http.post('/login', payload); // 发送POST请求
-  //   return res as unknown as LoginResponse; // 类型断言为登录响应数据
-  // },
-
-  // 获取当前会话用户信息
-  async me(): Promise<SessionResponse> {
-    const res = await http.get('/me');
-    return res as unknown as SessionResponse;
+  async refresh(refreshToken: string): Promise<LoginResponse> {
+    return await http.post('/auth/refresh', { refresh_token: refreshToken });
   },
 
-  // 退出登录（清除 HttpOnly Cookie）
+  async me(): Promise<ProfileResponse> {
+    return await http.get('/api/users/profile');
+  },
+
   async logout(): Promise<void> {
-    await http.post('/logout');
+    await http.post('/auth/logout');
   }
 };
 
-// 导出认证API接口对象
 export default authAPI;

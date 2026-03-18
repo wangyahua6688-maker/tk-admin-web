@@ -22,6 +22,7 @@ import { onBeforeUnmount, ref, shallowRef, watch } from 'vue';
 import { Editor, Toolbar } from '@wangeditor/editor-for-vue';
 import type { IDomEditor, IEditorConfig, IToolbarConfig } from '@wangeditor/editor';
 import '@wangeditor/editor/dist/css/style.css';
+import uploadAPI from '@/features/ui/api/upload';
 
 const props = defineProps<{ modelValue: string }>();
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>();
@@ -58,8 +59,14 @@ const editorConfig: Partial<IEditorConfig> = {
   placeholder: '请输入内容...',
   MENU_CONF: {
     uploadImage: {
-      // 当前版本先转 base64 预览与提交；后续可替换为后端上传接口。
-      base64LimitSize: 5 * 1024 * 1024
+      async customUpload(file: File, insertFn: (url: string, alt: string, href: string) => void) {
+        try {
+          const resp = await uploadAPI.uploadImage(file);
+          insertFn(resp.url, file.name, resp.url);
+        } catch (err: any) {
+          console.error('富文本编辑器上传图片失败:', err);
+        }
+      }
     }
   }
 };

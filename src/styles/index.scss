@@ -1,0 +1,145 @@
+/*
+ * 全局主题样式（Apple 风格）。
+ * 设计目标：
+ * 1. 低饱和浅色背景 + 玻璃卡片；
+ * 2. 清晰层级与轻量动效；
+ * 3. 兼顾桌面与移动端可读性。
+ */
+:root {
+  --brand-primary: #2563eb;
+  --brand-primary-rgb: 37, 99, 235;
+  --brand-primary-soft: rgba(37, 99, 235, 0.12);
+
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+
+  --surface-page: #f5f7fb;
+  --surface-card: #ffffff;
+
+  --border-soft: rgba(148, 163, 184, 0.24);
+  --border-strong: rgba(148, 163, 184, 0.42);
+
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+
+  --shadow-sm: 0 6px 18px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 12px 30px rgba(15, 23, 42, 0.09);
+  --shadow-lg: 0 20px 44px rgba(15, 23, 42, 0.12);
+
+  --shell-bg-1: #dfe9ff;
+  --shell-bg-2: #eef3ff;
+  --shell-bg-3: #f6f8fb;
+  --shell-bg-4: #f8fafc;
+
+  --sidebar-bg-from: rgba(248, 250, 255, 0.9);
+  --sidebar-bg-to: rgba(255, 255, 255, 0.95);
+
+  --app-font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', 'Helvetica Neue', Arial, sans-serif;
+  --app-font-size: 14px;
+  --app-font-weight: 400;
+  --app-font-weight-semibold: 600;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  color: var(--text-primary);
+  background: var(--surface-page);
+  font-family: var(--app-font-family);
+  font-size: var(--app-font-size);
+  font-weight: var(--app-font-weight);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Element Plus 全局变量覆盖 */
+:root {
+  --el-color-primary: var(--brand-primary);
+}
+
+/* 通用卡片 */
+.card {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 16px;
+}
+
+.page-title {
+  font-size: clamp(20px, 2.2vw, 22px);
+  font-weight: var(--app-font-weight-semibold);
+  margin-bottom: 14px;
+}
+
+.toolbar {
+  margin-bottom: 14px;
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* 让按钮与输入更接近 Apple 视觉 */
+.el-button {
+  border-radius: 10px;
+}
+
+.el-input__wrapper,
+.el-select__wrapper,
+.el-textarea__inner {
+  border-radius: 10px;
+}
+
+.el-table {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.el-table th.el-table__cell {
+  background: #f7f9fc;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.el-menu-item,
+.el-sub-menu__title {
+  border-radius: 10px;
+}
+
+/* 全局过渡：避免页面跳变突兀 */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.2s ease;
+}
+
+.fade-slide-enter-from,
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 20px;
+  }
+
+  .card {
+    padding: 12px;
+  }
+}

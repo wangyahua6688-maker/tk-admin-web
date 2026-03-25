@@ -128,7 +128,6 @@ function onToggleCollapse() {
   --sidebar-width: 250px;
   --sidebar-collapsed-width: 72px;
   width: var(--sidebar-width);
-  height: 100vh;
   background: linear-gradient(180deg, var(--sidebar-bg-from) 0%, var(--sidebar-bg-to) 100%);
   border-right: 1px solid rgba(147, 163, 184, 0.22);
   box-shadow: 6px 0 30px rgba(15, 23, 42, 0.06);

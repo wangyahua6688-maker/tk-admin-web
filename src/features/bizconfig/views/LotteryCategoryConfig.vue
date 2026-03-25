@@ -71,16 +71,16 @@
           </template>
         </el-table-column>
         <el-table-column prop="draw_code" label="暗码" min-width="120" />
-        <el-table-column label="互动统计" min-width="220">
-          <template #default="{ row }">
-            👍{{ row.likes_count || 0 }} / 💬{{ row.comment_count || 0 }} / ☆{{ row.favorite_count || 0 }} / 👁{{ row.read_count || 0 }}
-          </template>
-        </el-table-column>
-        <el-table-column label="投票配置" width="150">
-          <template #default="{ row }">
-            {{ Number(row.poll_enabled) === 1 ? '显示' : '隐藏' }} / {{ Number(row.poll_default_expand) === 1 ? '默认展开' : '默认收起' }}
-          </template>
-        </el-table-column>
+<!--        <el-table-column label="互动统计" min-width="220">-->
+<!--          <template #default="{ row }">-->
+<!--            👍{{ row.likes_count || 0 }} / 💬{{ row.comment_count || 0 }} / ☆{{ row.favorite_count || 0 }} / 👁{{ row.read_count || 0 }}-->
+<!--          </template>-->
+<!--        </el-table-column>-->
+<!--        <el-table-column label="投票配置" width="150">-->
+<!--          <template #default="{ row }">-->
+<!--            {{ Number(row.poll_enabled) === 1 ? '显示' : '隐藏' }} / {{ Number(row.poll_default_expand) === 1 ? '默认展开' : '默认收起' }}-->
+<!--          </template>-->
+<!--        </el-table-column>-->
         <el-table-column label="状态" width="90">
           <template #default="{ row }">
             <el-tag :type="Number(row.status) === 1 ? 'success' : 'warning'">{{ Number(row.status) === 1 ? '启用' : '停用' }}</el-tag>

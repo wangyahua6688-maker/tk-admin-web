@@ -158,16 +158,10 @@
         <el-form-item label="普通号码（6个）" required>
           <div class="number-picker">
             <div class="picked-row">
-              <el-tag
-                v-for="n in selectedNormalNumbers"
-                :key="`normal-picked-${n}`"
-                type="danger"
-                effect="dark"
-                round
-              >
+              <el-tag v-for="n in selectedNormalNumbers" :key="`normal-picked-${n}`" type="danger" effect="dark" round>
                 {{ pad2(n) }}
               </el-tag>
-              <span class="picked-tip">已选 {{ selectedNormalNumbers.length }}/6</span>
+              <span class="picked-tip">已选 {{ selectedNormalNumbers.length }}/6，顺序即正1到正6</span>
             </div>
             <div class="number-grid">
               <button
@@ -207,49 +201,41 @@
           </div>
         </el-form-item>
 
-        <el-form-item label="号码标签配置（逐号设置属相/五行）" required>
-          <div class="label-editor">
-            <div v-if="selectedNumberLabelRows.length === 0" class="picked-tip">请先选择普通号码与特别号码，再配置对应属相与五行</div>
-            <div v-for="row in selectedNumberLabelRows" :key="`label-row-${row.type}-${row.number}`" class="label-row">
-              <el-tag :type="row.type === 'special' ? 'success' : 'danger'" effect="dark" round>
-                {{ row.type === 'special' ? '特' : '正' }}{{ pad2(row.number) }}
-              </el-tag>
-              <el-select v-model="numberLabelMap[row.number].zodiac" placeholder="属相" class="label-select">
-                <el-option v-for="item in zodiacOptions" :key="`zodiac-${row.number}-${item}`" :label="item" :value="item" />
-              </el-select>
-              <el-select v-model="numberLabelMap[row.number].wuxing" placeholder="五行" class="label-select">
-                <el-option v-for="item in wuxingOptions" :key="`wuxing-${row.number}-${item}`" :label="item" :value="item" />
-              </el-select>
+        <el-form-item label="号码标签（自动关联）">
+          <div class="auto-label-editor">
+            <div v-if="selectedNumberMetaRows.length === 0" class="picked-tip">请先选择普通号码与特别号码，系统会自动关联波色 / 属相 / 五行。</div>
+            <div
+              v-for="row in selectedNumberMetaRows"
+              :key="`auto-label-${row.type}-${row.number}`"
+              class="auto-label-card"
+              :class="{ special: row.type === 'special' }"
+            >
+              <div class="label-row-head">
+                <el-tag :type="row.type === 'special' ? 'success' : 'danger'" effect="dark" round>
+                  {{ row.positionLabel }}
+                </el-tag>
+                <span class="ball-chip" :class="waveClass(row.colorWave)">{{ pad2(row.number) }}</span>
+              </div>
+              <div class="label-row-meta">
+                <span>{{ row.colorWave }}</span>
+                <span>{{ row.zodiac }}</span>
+                <span>{{ row.wuxing }}</span>
+                <span>{{ row.beast }}</span>
+              </div>
             </div>
           </div>
-        </el-form-item>
-
-        <el-form-item label="开奖标签预览">
-          <el-alert :title="drawLabelsPreviewText" type="info" :closable="false" show-icon />
         </el-form-item>
 
         <el-form-item label="开奖结果预览">
           <el-alert :title="drawPreviewText" type="success" :closable="false" show-icon />
         </el-form-item>
 
+        <el-form-item label="标签串预览">
+          <el-alert :title="autoLabelPreviewText" type="info" :closable="false" show-icon />
+        </el-form-item>
+
         <el-form-item label="开奖回放地址（直播结束后录入）">
           <el-input v-model="drawForm.playback_url" maxlength="255" placeholder="https://..." />
-        </el-form-item>
-
-        <el-form-item label="特码单双">
-          <el-input v-model="drawForm.special_single_double" maxlength="16" placeholder="留空自动计算" />
-        </el-form-item>
-
-        <el-form-item label="特码大小">
-          <el-input v-model="drawForm.special_big_small" maxlength="16" placeholder="留空自动计算" />
-        </el-form-item>
-
-        <el-form-item label="总和单双">
-          <el-input v-model="drawForm.sum_single_double" maxlength="16" placeholder="留空自动计算" />
-        </el-form-item>
-
-        <el-form-item label="总和大小">
-          <el-input v-model="drawForm.sum_big_small" maxlength="16" placeholder="留空自动计算" />
         </el-form-item>
 
         <el-form-item label="六肖推荐">
@@ -268,38 +254,6 @@
           <el-input v-model="drawForm.recommend_ten" maxlength="255" placeholder="如：13 49 39 36 05 42 32 34 26 33" />
         </el-form-item>
 
-        <el-form-item label="特码（数字）">
-          <el-input v-model="drawForm.special_code" maxlength="16" placeholder="留空自动填充特别号" />
-        </el-form-item>
-
-        <el-form-item label="正码（逗号分隔）">
-          <el-input v-model="drawForm.normal_code" maxlength="120" placeholder="留空自动填充前6个普通号" />
-        </el-form-item>
-
-        <el-form-item label="正1特说明">
-          <el-input v-model="drawForm.zheng1" maxlength="120" />
-        </el-form-item>
-
-        <el-form-item label="正2特说明">
-          <el-input v-model="drawForm.zheng2" maxlength="120" />
-        </el-form-item>
-
-        <el-form-item label="正3特说明">
-          <el-input v-model="drawForm.zheng3" maxlength="120" />
-        </el-form-item>
-
-        <el-form-item label="正4特说明">
-          <el-input v-model="drawForm.zheng4" maxlength="120" />
-        </el-form-item>
-
-        <el-form-item label="正5特说明">
-          <el-input v-model="drawForm.zheng5" maxlength="120" />
-        </el-form-item>
-
-        <el-form-item label="正6特说明">
-          <el-input v-model="drawForm.zheng6" maxlength="120" />
-        </el-form-item>
-
         <el-form-item label="当前期">
           <el-switch v-model="drawForm.is_current" active-text="启用" inactive-text="停用" />
         </el-form-item>
@@ -313,6 +267,84 @@
         </el-form-item>
       </el-form>
 
+      <section class="auto-preview-panel">
+        <div class="preview-panel-head">
+          <h3>自动玩法结果预览</h3>
+          <p>以下结果随选号实时更新，保存时将按同一套规则自动写入数据库，不再需要手工填写。</p>
+        </div>
+
+        <div v-if="!autoDrawPreview" class="picked-tip">请先选择完整的 6 个普通号码和 1 个特别号码，下面会展示自动计算出的两面、正码说明和入库标签。</div>
+
+        <template v-else>
+          <div class="preview-section">
+            <h4>特码玩法</h4>
+            <div class="preview-grid preview-grid--dense">
+              <div class="preview-item"><span>特码号码</span><strong>{{ autoDrawPreview.special.code }}</strong></div>
+              <div class="preview-item"><span>特码波色</span><strong>{{ autoDrawPreview.special.colorWave }}</strong></div>
+              <div class="preview-item"><span>特码生肖</span><strong>{{ autoDrawPreview.special.zodiac }}</strong></div>
+              <div class="preview-item"><span>特码五行</span><strong>{{ autoDrawPreview.special.wuxing }}</strong></div>
+              <div class="preview-item"><span>特码大小</span><strong>{{ autoDrawPreview.special.bigSmall }}</strong></div>
+              <div class="preview-item"><span>特码单双</span><strong>{{ autoDrawPreview.special.singleDouble }}</strong></div>
+              <div class="preview-item"><span>合数单双</span><strong>{{ autoDrawPreview.special.sumSingleDouble }}</strong></div>
+              <div class="preview-item"><span>尾数大小</span><strong>{{ autoDrawPreview.special.tailBigSmall }}</strong></div>
+              <div class="preview-item"><span>家畜 / 野兽</span><strong>{{ autoDrawPreview.special.beast }}</strong></div>
+              <div class="preview-item"><span>半波（波色+大小）</span><strong>{{ autoDrawPreview.special.halfWaveColorSize }}</strong></div>
+              <div class="preview-item"><span>半波（波色+单双）</span><strong>{{ autoDrawPreview.special.halfWaveColorParity }}</strong></div>
+            </div>
+          </div>
+
+          <div class="preview-section">
+            <h4>总分与统计</h4>
+            <div class="preview-grid preview-grid--dense">
+              <div class="preview-item"><span>总和值</span><strong>{{ autoDrawPreview.total.totalSum }}</strong></div>
+              <div class="preview-item"><span>总和大小</span><strong>{{ autoDrawPreview.total.bigSmall }}</strong></div>
+              <div class="preview-item"><span>总和单双</span><strong>{{ autoDrawPreview.total.singleDouble }}</strong></div>
+              <div class="preview-item"><span>正码串</span><strong>{{ autoDrawPreview.total.normalCode }}</strong></div>
+              <div class="preview-item"><span>七码单 / 双</span><strong>{{ autoDrawPreview.total.oddCount }} / {{ autoDrawPreview.total.evenCount }}</strong></div>
+              <div class="preview-item"><span>七码大 / 小</span><strong>{{ autoDrawPreview.total.bigCount }} / {{ autoDrawPreview.total.smallCount }}</strong></div>
+              <div class="preview-item"><span>不同生肖数</span><strong>{{ autoDrawPreview.total.distinctZodiacCount }}</strong></div>
+              <div class="preview-item"><span>不同尾数数</span><strong>{{ autoDrawPreview.total.distinctTailCount }}</strong></div>
+              <div class="preview-item"><span>不同五行数</span><strong>{{ autoDrawPreview.total.distinctWuxingCount }}</strong></div>
+              <div class="preview-item preview-item--wide"><span>已出生肖</span><strong>{{ autoDrawPreview.total.appearedZodiacs }}</strong></div>
+              <div class="preview-item preview-item--wide"><span>已出尾数</span><strong>{{ autoDrawPreview.total.appearedTails }}</strong></div>
+              <div class="preview-item preview-item--wide"><span>已出五行</span><strong>{{ autoDrawPreview.total.appearedWuxings }}</strong></div>
+            </div>
+          </div>
+
+          <div class="preview-section">
+            <h4>正码 1-6 自动说明</h4>
+            <div class="position-list">
+              <div v-for="item in autoDrawPreview.positions" :key="item.positionLabel" class="position-item">
+                <span class="position-item__label">{{ item.positionLabel }}</span>
+                <strong>{{ item.description }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="preview-section">
+            <h4>入库标签预览</h4>
+            <div class="storage-list">
+              <div class="storage-item">
+                <span>color_labels</span>
+                <code>{{ autoDrawPreview.storage.colorLabels }}</code>
+              </div>
+              <div class="storage-item">
+                <span>zodiac_labels</span>
+                <code>{{ autoDrawPreview.storage.zodiacLabels }}</code>
+              </div>
+              <div class="storage-item">
+                <span>wuxing_labels</span>
+                <code>{{ autoDrawPreview.storage.wuxingLabels }}</code>
+              </div>
+              <div class="storage-item">
+                <span>draw_labels</span>
+                <code>{{ autoDrawPreview.storage.drawLabels }}</code>
+              </div>
+            </div>
+          </div>
+        </template>
+      </section>
+
       <template #footer>
         <el-button @click="drawDialogVisible = false">取消</el-button>
         <el-button type="primary" :loading="savingDraw" @click="saveDraw">保存</el-button>
@@ -325,6 +357,65 @@
 import { computed, onMounted, reactive, ref } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import bizConfigAPI, { type DrawRecordItem, type SpecialLotteryItem } from '@/features/bizconfig/api/biz-config';
+
+type NumberMetaRow = {
+  type: 'normal' | 'special';
+  positionLabel: string;
+  number: number;
+  colorWave: string;
+  zodiac: string;
+  wuxing: string;
+  beast: string;
+  bigSmall: string;
+  singleDouble: string;
+  sumSingleDouble: string;
+  tailBigSmall: string;
+  tailLabel: string;
+  halfWaveColorSize: string;
+  halfWaveColorParity: string;
+};
+
+type AutoDrawPreview = {
+  special: {
+    code: string;
+    colorWave: string;
+    zodiac: string;
+    wuxing: string;
+    beast: string;
+    bigSmall: string;
+    singleDouble: string;
+    sumSingleDouble: string;
+    tailBigSmall: string;
+    halfWaveColorSize: string;
+    halfWaveColorParity: string;
+  };
+  total: {
+    totalSum: number;
+    bigSmall: string;
+    singleDouble: string;
+    normalCode: string;
+    oddCount: number;
+    evenCount: number;
+    bigCount: number;
+    smallCount: number;
+    distinctZodiacCount: number;
+    distinctTailCount: number;
+    distinctWuxingCount: number;
+    appearedZodiacs: string;
+    appearedTails: string;
+    appearedWuxings: string;
+  };
+  positions: Array<{
+    positionLabel: string;
+    description: string;
+  }>;
+  storage: {
+    colorLabels: string;
+    zodiacLabels: string;
+    wuxingLabels: string;
+    drawLabels: string;
+  };
+};
 
 const specialKeyword = ref('');
 const drawKeyword = ref('');
@@ -344,9 +435,50 @@ const savingDraw = ref(false);
 const numberPool = Array.from({ length: 49 }, (_, idx) => idx + 1);
 const selectedNormalNumbers = ref<number[]>([]);
 const selectedSpecialNumber = ref<number | null>(null);
-const zodiacOptions = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'];
-const wuxingOptions = ['金', '木', '水', '火', '土'];
-const numberLabelMap = reactive<Record<number, { zodiac: string; wuxing: string }>>({});
+
+const waveNumberMap = buildNumberMap({
+  红波: [1, 2, 7, 8, 12, 13, 18, 19, 23, 24, 29, 30, 34, 35, 40, 45, 46],
+  蓝波: [3, 4, 9, 10, 14, 15, 20, 25, 26, 31, 36, 37, 41, 42, 47, 48],
+  绿波: [5, 6, 11, 16, 17, 21, 22, 27, 28, 32, 33, 38, 39, 43, 44, 49]
+});
+const zodiacNumberMap = buildNumberMap({
+  鼠: [7, 19, 31, 43],
+  牛: [6, 18, 30, 42],
+  虎: [5, 17, 29, 41],
+  兔: [4, 16, 28, 40],
+  龙: [3, 15, 27, 39],
+  蛇: [2, 14, 26, 38],
+  马: [1, 13, 25, 37, 49],
+  羊: [12, 24, 36, 48],
+  猴: [11, 23, 35, 47],
+  鸡: [10, 22, 34, 46],
+  狗: [9, 21, 33, 45],
+  猪: [8, 20, 32, 44]
+});
+const wuxingNumberMap = buildNumberMap({
+  金: [3, 4, 11, 12, 25, 26, 33, 34, 41, 42],
+  木: [7, 8, 15, 16, 23, 24, 37, 38, 45, 46],
+  水: [13, 14, 21, 22, 29, 30, 43, 44],
+  火: [1, 2, 9, 10, 17, 18, 31, 32, 39, 40, 47, 48],
+  土: [5, 6, 19, 20, 27, 28, 35, 36, 49]
+});
+const beastByZodiac: Record<string, string> = {
+  猪: '家畜',
+  狗: '家畜',
+  牛: '家畜',
+  马: '家畜',
+  羊: '家畜',
+  鸡: '家畜',
+  鼠: '野兽',
+  虎: '野兽',
+  兔: '野兽',
+  龙: '野兽',
+  蛇: '野兽',
+  猴: '野兽'
+};
+const zodiacOrder = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'];
+const wuxingOrder = ['金', '木', '水', '火', '土'];
+const tailOrder = ['0尾', '1尾', '2尾', '3尾', '4尾', '5尾', '6尾', '7尾', '8尾', '9尾'];
 
 const specialForm = reactive({
   id: 0,
@@ -370,24 +502,11 @@ const drawForm = reactive({
   normal_draw_result: '',
   special_draw_result: '',
   draw_result: '',
-  draw_labels: '',
   playback_url: '',
-  special_single_double: '',
-  special_big_small: '',
-  sum_single_double: '',
-  sum_big_small: '',
   recommend_six: '',
   recommend_four: '',
   recommend_one: '',
   recommend_ten: '',
-  special_code: '',
-  normal_code: '',
-  zheng1: '',
-  zheng2: '',
-  zheng3: '',
-  zheng4: '',
-  zheng5: '',
-  zheng6: '',
   is_current: false,
   status: true,
   sort: 0
@@ -429,21 +548,89 @@ const selectedDrawSpecialText = computed(() => {
   return specialLabel(drawForm.special_lottery_id);
 });
 
-const selectedNumberLabelRows = computed(() => {
-  const rows: Array<{ number: number; type: 'normal' | 'special' }> = selectedNormalNumbers.value.map((num) => ({
-    number: num,
-    type: 'normal'
-  }));
+const selectedNumberMetaRows = computed<NumberMetaRow[]>(() => {
+  const rows = selectedNormalNumbers.value.map((num, index) => buildNumberMetaRow(num, `正${index + 1}`, 'normal'));
   if (selectedSpecialNumber.value !== null) {
-    rows.push({ number: selectedSpecialNumber.value, type: 'special' });
+    rows.push(buildNumberMetaRow(selectedSpecialNumber.value, '特码', 'special'));
   }
   return rows;
 });
 
-const drawLabelsPreviewText = computed(() => {
-  const text = buildDrawLabelsText(false);
-  return text || '请先为每个开奖号码选择属相和五行';
+const autoLabelPreviewText = computed(() => {
+  if (selectedNumberMetaRows.value.length === 0) {
+    return '请先选择开奖号码，系统会自动生成颜色 / 属相 / 五行标签。';
+  }
+  return selectedNumberMetaRows.value.map((row) => `${row.positionLabel} ${row.colorWave}/${row.zodiac}/${row.wuxing}`).join('，');
 });
+
+const autoDrawPreview = computed<AutoDrawPreview | null>(() => {
+  const rows = selectedNumberMetaRows.value;
+  if (rows.length !== 7) {
+    return null;
+  }
+
+  const numbers = rows.map((row) => row.number);
+  const totalSum = numbers.reduce((sum, num) => sum + num, 0);
+  const oddCount = numbers.filter((num) => countAsOdd(num)).length;
+  const evenCount = numbers.length - oddCount;
+  const bigCount = numbers.filter((num) => countAsBig(num)).length;
+  const smallCount = numbers.length - bigCount;
+  const zodiacSet = new Set(rows.map((row) => row.zodiac).filter(Boolean));
+  const tailSet = new Set(rows.map((row) => row.tailLabel));
+  const wuxingSet = new Set(rows.map((row) => row.wuxing).filter(Boolean));
+
+  const storage = buildStoragePreview(rows);
+  const special = rows[6];
+
+  return {
+    special: {
+      code: String(special.number),
+      colorWave: special.colorWave,
+      zodiac: special.zodiac,
+      wuxing: special.wuxing,
+      beast: special.beast,
+      bigSmall: special.bigSmall,
+      singleDouble: special.singleDouble,
+      sumSingleDouble: special.sumSingleDouble,
+      tailBigSmall: special.tailBigSmall,
+      halfWaveColorSize: special.halfWaveColorSize,
+      halfWaveColorParity: special.halfWaveColorParity
+    },
+    total: {
+      totalSum,
+      bigSmall: totalBigSmall(totalSum),
+      singleDouble: totalSingleDouble(totalSum),
+      normalCode: numbers.slice(0, 6).join(','),
+      oddCount,
+      evenCount,
+      bigCount,
+      smallCount,
+      distinctZodiacCount: zodiacSet.size,
+      distinctTailCount: tailSet.size,
+      distinctWuxingCount: wuxingSet.size,
+      appearedZodiacs: zodiacOrder.filter((label) => zodiacSet.has(label)).join('、') || '-',
+      appearedTails: tailOrder.filter((label) => tailSet.has(label)).join('、') || '-',
+      appearedWuxings: wuxingOrder.filter((label) => wuxingSet.has(label)).join('、') || '-'
+    },
+    positions: rows.slice(0, 6).map((row) => ({
+      positionLabel: row.positionLabel,
+      description: [row.bigSmall, row.singleDouble, row.colorWave, row.sumSingleDouble, row.tailBigSmall, row.zodiac, row.wuxing]
+        .filter(Boolean)
+        .join(' / ')
+    })),
+    storage
+  };
+});
+
+function buildNumberMap(source: Record<string, number[]>): Record<number, string> {
+  const out: Record<number, string> = {};
+  Object.entries(source).forEach(([label, numbers]) => {
+    numbers.forEach((num) => {
+      out[num] = label;
+    });
+  });
+  return out;
+}
 
 function specialLabel(id: number): string {
   const row = specialMap.value.get(id);
@@ -502,67 +689,106 @@ function selectedNumbersInOrder(): number[] {
   return values;
 }
 
-function syncNumberLabelMap() {
-  const selectedSet = new Set<number>(selectedNumbersInOrder());
-  Object.keys(numberLabelMap).forEach((key) => {
-    const number = Number.parseInt(key, 10);
-    if (!selectedSet.has(number)) {
-      delete numberLabelMap[number];
-    }
-  });
-  selectedSet.forEach((number) => {
-    if (!numberLabelMap[number]) {
-      numberLabelMap[number] = { zodiac: '', wuxing: '' };
-    }
-  });
+function resolveColorWave(num: number): string {
+  return waveNumberMap[num] || '--';
 }
 
-function splitDrawLabels(raw: string): Array<{ zodiac: string; wuxing: string }> {
-  return String(raw || '')
-    .split(',')
-    .map((item) => item.trim())
-    .filter((item) => item !== '')
-    .map((item) => {
-      const parts = item.split('/');
-      return {
-        zodiac: (parts[0] || '').trim(),
-        wuxing: (parts[1] || '').trim()
-      };
-    });
+function resolveZodiac(num: number): string {
+  return zodiacNumberMap[num] || '--';
 }
 
-function loadNumberLabelMapFromRecord(record: DrawRecordItem) {
-  syncNumberLabelMap();
-  const selected = selectedNumbersInOrder();
-  const pairs = splitDrawLabels(record.draw_labels || '');
-  selected.forEach((number, index) => {
-    const pair = pairs[index];
-    if (!pair) {
-      return;
-    }
-    numberLabelMap[number] = {
-      zodiac: pair.zodiac,
-      wuxing: pair.wuxing
-    };
-  });
+function resolveWuxing(num: number): string {
+  return wuxingNumberMap[num] || '--';
 }
 
-function buildDrawLabelsText(requireComplete: boolean): string {
-  const labels: string[] = [];
-  for (const number of selectedNumbersInOrder()) {
-    const pair = numberLabelMap[number];
-    const zodiac = (pair?.zodiac || '').trim();
-    const wuxing = (pair?.wuxing || '').trim();
-    if (!zodiac || !wuxing) {
-      if (requireComplete) {
-        return '';
-      }
-      labels.push(`${zodiac || '--'}/${wuxing || '--'}`);
-      continue;
-    }
-    labels.push(`${zodiac}/${wuxing}`);
-  }
-  return labels.join(',');
+function resolveBeast(zodiac: string): string {
+  return beastByZodiac[zodiac] || '--';
+}
+
+function specialBigSmall(num: number): string {
+  if (num === 49) return '和';
+  return num >= 25 ? '大' : '小';
+}
+
+function specialSingleDouble(num: number): string {
+  if (num === 49) return '和';
+  return num % 2 === 0 ? '双' : '单';
+}
+
+function specialSumSingleDouble(num: number): string {
+  if (num === 49) return '和';
+  const sum = Math.floor(num / 10) + (num % 10);
+  return sum % 2 === 0 ? '合双' : '合单';
+}
+
+function specialTailBigSmall(num: number): string {
+  if (num === 49) return '和';
+  return num % 10 <= 4 ? '尾小' : '尾大';
+}
+
+function totalBigSmall(total: number): string {
+  return total >= 175 ? '大' : '小';
+}
+
+function totalSingleDouble(total: number): string {
+  return total % 2 === 0 ? '双' : '单';
+}
+
+function countAsOdd(num: number): boolean {
+  return num === 49 || num % 2 === 1;
+}
+
+function countAsBig(num: number): boolean {
+  return num === 49 || num >= 25;
+}
+
+function buildHalfWaveColorSize(num: number, colorWave: string, bigSmall: string): string {
+  if (num === 49) return '和局';
+  return `${colorWave.replace(/波$/, '')}${bigSmall}`;
+}
+
+function buildHalfWaveColorParity(num: number, colorWave: string, singleDouble: string): string {
+  if (num === 49) return '和局';
+  return `${colorWave.replace(/波$/, '')}${singleDouble}`;
+}
+
+function buildNumberMetaRow(number: number, positionLabel: string, type: 'normal' | 'special'): NumberMetaRow {
+  const colorWave = resolveColorWave(number);
+  const zodiac = resolveZodiac(number);
+  const wuxing = resolveWuxing(number);
+  const bigSmall = specialBigSmall(number);
+  const singleDouble = specialSingleDouble(number);
+  return {
+    type,
+    positionLabel,
+    number,
+    colorWave,
+    zodiac,
+    wuxing,
+    beast: resolveBeast(zodiac),
+    bigSmall,
+    singleDouble,
+    sumSingleDouble: specialSumSingleDouble(number),
+    tailBigSmall: specialTailBigSmall(number),
+    tailLabel: `${number % 10}尾`,
+    halfWaveColorSize: buildHalfWaveColorSize(number, colorWave, bigSmall),
+    halfWaveColorParity: buildHalfWaveColorParity(number, colorWave, singleDouble)
+  };
+}
+
+function buildStoragePreview(rows: NumberMetaRow[]) {
+  return {
+    colorLabels: rows.map((row) => row.colorWave).join(','),
+    zodiacLabels: rows.map((row) => row.zodiac).join(','),
+    wuxingLabels: rows.map((row) => row.wuxing).join(','),
+    drawLabels: rows.map((row) => `${row.zodiac}/${row.wuxing}`).join(',')
+  };
+}
+
+function waveClass(colorWave: string): string {
+  if (colorWave === '红波') return 'wave-red';
+  if (colorWave === '蓝波') return 'wave-blue';
+  return 'wave-green';
 }
 
 function formatDrawResult(normalRaw: string, specialRaw: string, mergedRaw: string): string {
@@ -600,7 +826,6 @@ function toggleNormalNumber(num: number) {
   if (idx >= 0) {
     selectedNormalNumbers.value.splice(idx, 1);
     syncDrawFieldsFromSelection();
-    syncNumberLabelMap();
     return;
   }
   if (selectedSpecialNumber.value === num) {
@@ -613,7 +838,6 @@ function toggleNormalNumber(num: number) {
   }
   selectedNormalNumbers.value.push(num);
   syncDrawFieldsFromSelection();
-  syncNumberLabelMap();
 }
 
 function selectSpecialNumber(num: number) {
@@ -623,7 +847,6 @@ function selectSpecialNumber(num: number) {
   }
   selectedSpecialNumber.value = num;
   syncDrawFieldsFromSelection();
-  syncNumberLabelMap();
 }
 
 function resetDrawNumbers() {
@@ -632,9 +855,6 @@ function resetDrawNumbers() {
   drawForm.normal_draw_result = '';
   drawForm.special_draw_result = '';
   drawForm.draw_result = '';
-  Object.keys(numberLabelMap).forEach((key) => {
-    delete numberLabelMap[Number.parseInt(key, 10)];
-  });
 }
 
 function loadDrawNumbers(record: DrawRecordItem) {
@@ -644,14 +864,12 @@ function loadDrawNumbers(record: DrawRecordItem) {
     selectedNormalNumbers.value = [...normal];
     selectedSpecialNumber.value = special[0];
     syncDrawFieldsFromSelection();
-    loadNumberLabelMapFromRecord(record);
     return;
   }
   const merged = parseCSVNumbers(record.draw_result);
   selectedNormalNumbers.value = merged.slice(0, 6);
   selectedSpecialNumber.value = merged.length >= 7 ? merged[6] : null;
   syncDrawFieldsFromSelection();
-  loadNumberLabelMapFromRecord(record);
 }
 
 async function reload() {
@@ -757,24 +975,11 @@ function openCreateDraw() {
     normal_draw_result: '',
     special_draw_result: '',
     draw_result: '',
-    draw_labels: '',
     playback_url: '',
-    special_single_double: '',
-    special_big_small: '',
-    sum_single_double: '',
-    sum_big_small: '',
     recommend_six: '',
     recommend_four: '',
     recommend_one: '',
     recommend_ten: '',
-    special_code: '',
-    normal_code: '',
-    zheng1: '',
-    zheng2: '',
-    zheng3: '',
-    zheng4: '',
-    zheng5: '',
-    zheng6: '',
     is_current: false,
     status: true,
     sort: 0
@@ -794,24 +999,11 @@ function openEditDraw(row: DrawRecordItem) {
     normal_draw_result: row.normal_draw_result || '',
     special_draw_result: row.special_draw_result || '',
     draw_result: row.draw_result || '',
-    draw_labels: row.draw_labels || '',
     playback_url: row.playback_url || '',
-    special_single_double: row.special_single_double || '',
-    special_big_small: row.special_big_small || '',
-    sum_single_double: row.sum_single_double || '',
-    sum_big_small: row.sum_big_small || '',
     recommend_six: row.recommend_six || '',
     recommend_four: row.recommend_four || '',
     recommend_one: row.recommend_one || '',
     recommend_ten: row.recommend_ten || '',
-    special_code: row.special_code || '',
-    normal_code: row.normal_code || '',
-    zheng1: row.zheng1 || '',
-    zheng2: row.zheng2 || '',
-    zheng3: row.zheng3 || '',
-    zheng4: row.zheng4 || '',
-    zheng5: row.zheng5 || '',
-    zheng6: row.zheng6 || '',
     is_current: Number(row.is_current) === 1,
     status: Number(row.status) === 1,
     sort: row.sort || 0
@@ -829,17 +1021,14 @@ async function saveDraw() {
     ElMessage.warning('请完整选择 6 个普通号码和 1 个特别号码');
     return;
   }
-  const drawLabels = buildDrawLabelsText(true);
-  if (!drawLabels) {
-    ElMessage.warning('请为每个开奖号码选择对应的属相和五行');
-    return;
-  }
   syncDrawFieldsFromSelection();
-  drawForm.draw_labels = drawLabels;
   const normalText = selectedNormalNumbers.value.map((n) => pad2(n)).join(' ');
   const specialText = pad2(selectedSpecialNumber.value);
   await ElMessageBox.confirm(
-    `请确认本期中奖号码：\n普通号码：${normalText}\n特别号码：${specialText}\n确认无误后将写入开奖记录。`,
+    `请确认本期中奖号码：
+普通号码：${normalText}
+特别号码：${specialText}
+确认无误后将写入开奖记录。`,
     '开奖数据确认',
     {
       type: 'warning',
@@ -857,24 +1046,11 @@ async function saveDraw() {
       normal_draw_result: drawForm.normal_draw_result,
       special_draw_result: drawForm.special_draw_result,
       draw_result: drawForm.draw_result,
-      draw_labels: drawForm.draw_labels.trim(),
       playback_url: drawForm.playback_url.trim(),
-      special_single_double: drawForm.special_single_double.trim(),
-      special_big_small: drawForm.special_big_small.trim(),
-      sum_single_double: drawForm.sum_single_double.trim(),
-      sum_big_small: drawForm.sum_big_small.trim(),
       recommend_six: drawForm.recommend_six.trim(),
       recommend_four: drawForm.recommend_four.trim(),
       recommend_one: drawForm.recommend_one.trim(),
       recommend_ten: drawForm.recommend_ten.trim(),
-      special_code: drawForm.special_code.trim(),
-      normal_code: drawForm.normal_code.trim(),
-      zheng1: drawForm.zheng1.trim(),
-      zheng2: drawForm.zheng2.trim(),
-      zheng3: drawForm.zheng3.trim(),
-      zheng4: drawForm.zheng4.trim(),
-      zheng5: drawForm.zheng5.trim(),
-      zheng6: drawForm.zheng6.trim(),
       is_current: drawForm.is_current ? 1 : 0,
       status: drawForm.status ? 1 : 0,
       sort: drawForm.sort
@@ -968,24 +1144,6 @@ onMounted(() => {
   width: 100%;
 }
 
-.label-editor {
-  display: grid;
-  gap: 10px;
-  width: 100%;
-  max-width: 760px;
-}
-
-.label-row {
-  display: grid;
-  grid-template-columns: 72px 1fr 1fr;
-  gap: 8px;
-  align-items: center;
-}
-
-.label-select {
-  width: 100%;
-}
-
 .num-btn.selected {
   border-color: #e11d48;
   background: #fff1f2;
@@ -998,16 +1156,222 @@ onMounted(() => {
   color: #047857;
 }
 
+.auto-label-editor {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+}
+
+.auto-label-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #e4e7ec;
+  background: #f8fafc;
+}
+
+.auto-label-card.special {
+  border-color: #a7f3d0;
+  background: #ecfdf3;
+}
+
+.label-row-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 140px;
+}
+
+.ball-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.wave-red {
+  background: linear-gradient(180deg, #ff7a7a, #d92d20);
+}
+
+.wave-blue {
+  background: linear-gradient(180deg, #7cc7ff, #175cd3);
+}
+
+.wave-green {
+  background: linear-gradient(180deg, #6ce9a6, #039855);
+}
+
+.label-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.label-row-meta span {
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid #e4e7ec;
+  background: #fff;
+  color: #344054;
+  font-size: 12px;
+}
+
+.auto-preview-panel {
+  margin-top: 18px;
+  border: 1px solid #dbe4f0;
+  border-radius: 18px;
+  padding: 18px;
+  background: linear-gradient(180deg, #fcfdff, #f6f9ff);
+}
+
+.preview-panel-head {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.preview-panel-head h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #101828;
+}
+
+.preview-panel-head p {
+  margin: 0;
+  color: #667085;
+  font-size: 13px;
+}
+
+.preview-section {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.preview-section h4 {
+  margin: 0;
+  font-size: 15px;
+  color: #1d2939;
+}
+
+.preview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.preview-grid--dense {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.preview-item {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid #e4e7ec;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.preview-item span {
+  font-size: 12px;
+  color: #667085;
+}
+
+.preview-item strong {
+  font-size: 15px;
+  color: #101828;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.preview-item--wide {
+  grid-column: span 2;
+}
+
+.position-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.position-item {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #e4e7ec;
+  background: #fff;
+}
+
+.position-item__label {
+  font-size: 12px;
+  color: #667085;
+}
+
+.position-item strong {
+  color: #101828;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.storage-list {
+  display: grid;
+  gap: 12px;
+}
+
+.storage-item {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #e4e7ec;
+  background: #fff;
+}
+
+.storage-item span {
+  font-size: 12px;
+  color: #667085;
+}
+
+.storage-item code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: normal;
+  word-break: break-all;
+  color: #0f172a;
+}
+
 @media (max-width: 1200px) {
   .toolbar-actions {
     flex-wrap: wrap;
     justify-content: flex-end;
+  }
+
+  .preview-grid--dense {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 980px) {
   .number-grid {
     grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .preview-grid,
+  .preview-grid--dense,
+  .position-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -1026,8 +1390,23 @@ onMounted(() => {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
-  .label-row {
+  .auto-label-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .label-row-meta {
+    justify-content: flex-start;
+  }
+
+  .preview-grid,
+  .preview-grid--dense,
+  .position-list {
     grid-template-columns: 1fr;
+  }
+
+  .preview-item--wide {
+    grid-column: span 1;
   }
 }
 </style>

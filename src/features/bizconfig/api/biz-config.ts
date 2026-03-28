@@ -86,6 +86,7 @@ export interface DrawRecordItem {
   special_draw_result: string;
   draw_result: string;
   draw_labels: string;
+  color_labels: string;
   zodiac_labels: string;
   wuxing_labels: string;
   playback_url: string;
@@ -257,6 +258,7 @@ export interface DrawRecordPayload {
   special_draw_result?: string;
   draw_result?: string;
   draw_labels?: string;
+  color_labels?: string;
   zodiac_labels?: string;
   wuxing_labels?: string;
   playback_url?: string;
